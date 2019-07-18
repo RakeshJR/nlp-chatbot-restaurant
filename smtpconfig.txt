@@ -1,0 +1,5 @@
+smtpserver_host=localhost
+smtpserver_port=25
+username=
+password=
+from_email=

@@ -16,7 +16,7 @@ import smtplib
 from email.message import EmailMessage
 
 logger = logging.getLogger("__name__")
-user_key = ""
+user_key = "6ce88a5ec1419e335afa1c7f92f4b739"
 config = {"user_key": user_key}
 _zomato = Zomato(config)
 
@@ -101,7 +101,7 @@ class ActionSearchRestaurants(Action):
 
         dispatcher.utter_message(response_message)
 
-        return [SlotSet("location", location)]
+        return [SlotSet("last_result", response_message)]
 
     def search_restaurant(
         self, location="", location_details={}, cuisine_list=[]
@@ -144,9 +144,16 @@ class ActionSendEmail(Action):
     def run(self, dispatcher, tracker, domain):
         location = tracker.get_slot("location")
         emailid = tracker.get_slot("email")
+        searchresult = tracker.get_slot("last_result")
+        print("**------ tracker-events: " + searchresult)
+#        for event in tracker.events:
+#            if (event.get("event") == "bot") and (event.get("event") is not None):
+#                text = event.get("text")
+#                print("**----- Last msg from bot: " + text)
         msg = EmailMessage()
-        msg.set_content(tracker.latest_message.text)
+        msg.set_content(searchresult) #tracker.latest_message.text)
         msg['Subject'] = 'The List of Restaurants you requested for %s' %location
+        print("*** Message subject: " + msg['Subject'])
         myvars = {}
         with open("smtpconfig.txt") as mailfile:
             for line in mailfile:
@@ -154,7 +161,8 @@ class ActionSendEmail(Action):
                 myvars[name.strip()] = var.strip()
 		# Send the message via SMTP server.
         s = smtplib.SMTP(host=myvars["smtpserver_host"], port=myvars["smtpserver_port"])
-        s.login(myvars["username"], myvars["password"]
+        s.starttls()
+        s.login(myvars["username"], myvars["password"])
         msg['From'] = myvars["from_email"]
         msg['To'] = emailid
         s.send_message(msg)
